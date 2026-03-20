@@ -1,0 +1,26 @@
+# ESP-IDF build output
+build/
+sdkconfig
+
+# ESP-IDF managed components
+managed_components/
+dependencies.lock
+
+# VS Code
+.vscode/
+
+# CLion / JetBrains
+.idea/
+cmake-build-*/
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+desktop.ini
+
+# Python cache (idf.py tooling)
+__pycache__/
+*.pyc
+*.pyo

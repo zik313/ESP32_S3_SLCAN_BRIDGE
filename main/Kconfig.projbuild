@@ -1,0 +1,7 @@
+# Kconfig.projbuild
+#
+# Все пользовательские app-level настройки проекта находятся в:
+#   main/slcan_bridge_project_configuration.h
+#
+# Этот файл намеренно пуст: нет app-level параметров, которые требовали бы
+# Kconfig. Системные настройки ESP-IDF — в sdkconfig.defaults.

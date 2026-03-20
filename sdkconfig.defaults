@@ -1,0 +1,7 @@
+# Prevent dominant bits in listen-only mode on affected ESP32 controllers.
+CONFIG_TWAI_ERRATA_FIX_LISTEN_ONLY_DOM=y
+
+# Match the actual flash size on the module (16 MB).
+# Without this, the bootloader logs a size mismatch warning at startup.
+CONFIG_ESPTOOLPY_FLASHSIZE_16MB=y
+CONFIG_ESPTOOLPY_FLASHSIZE="16MB"
