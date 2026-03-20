@@ -1,6 +1,6 @@
 # ESP32_S3_SLCAN_BRIDGE
 
-Standalone ESP-IDF firmware that bridges USB Serial/JTAG to a classical CAN bus using the LAWICEL/SLCAN protocol. Designed to work with SavvyCAN and any other SLCAN-compatible host software.
+Standalone ESP-IDF firmware that bridges USB Serial/JTAG to a classical CAN bus using the LAWICEL/SLCAN protocol. Works with SavvyCAN and any other SLCAN-compatible host software.
 
 ```
 Host (SavvyCAN / terminal)
@@ -24,10 +24,37 @@ Host (SavvyCAN / terminal)
 
 ---
 
+## Project status
+
+- Usable standalone SLCAN bridge
+- Tested with ESP-IDF v5.5.3
+- Target: ESP32-S3
+- Classical CAN only (no CAN FD)
+
+---
+
+## Quick start
+
+```bash
+git clone https://github.com/your-org/ESP32_S3_SLCAN_BRIDGE
+cd ESP32_S3_SLCAN_BRIDGE
+
+# Edit GPIO pins and other settings if needed:
+# main/slcan_bridge_project_configuration.h
+
+idf.py set-target esp32s3
+idf.py build
+idf.py flash
+```
+
+Then open SavvyCAN, add a LAWICEL connection on the correct serial port, set speed to 500000, enable Listen Only and Enable Bus, and connect.
+
+---
+
 ## What it does
 
 - **Normal mode** — full bidirectional CAN (transmit and receive)
-- **Listen-only mode** — receive only, no bus influence (uses TWAI listen-only, not transceiver control)
+- **Listen-only mode** — receive only, no bus influence (uses TWAI hardware listen-only)
 - **Bitrate switching** via SLCAN `Sx` commands, no reflash required
 - **Mode switching** between normal and listen-only on the fly
 - **Standard and extended frames**, data and remote frames
@@ -50,16 +77,16 @@ Host (SavvyCAN / terminal)
 
 ### ESP32-S3
 
-Any ESP32-S3 board with USB Serial/JTAG. The firmware uses the built-in USB Serial/JTAG peripheral — no external USB-UART adapter needed.
+Any ESP32-S3 board with USB Serial/JTAG. No external USB-UART adapter needed.
 
 ### CAN transceiver
 
-The firmware is **transceiver-agnostic**. It uses only the ESP32-S3 TWAI controller and two configurable GPIO signals (CAN RX and CAN TX). It does not control or know about transceiver mode pins (STB / S / RS / EN).
+The firmware is **transceiver-agnostic**. It uses only the ESP32-S3 TWAI controller and two configurable GPIO signals (CAN RX and CAN TX). It does not control transceiver mode pins (STB / S / RS / EN).
 
 Any external classical CAN transceiver is supported provided:
 
 1. **Correct wiring**: transceiver RXD → CAN RX GPIO, transceiver TXD → CAN TX GPIO.
-2. **Hardware-fixed active mode**: the transceiver mode pin (STB / S / RS or equivalent) must be held in normal/high-speed mode by hardware — hard-wired to GND or via an external circuit. The firmware does not touch this pin.
+2. **Hardware-fixed active mode**: the transceiver mode pin must be held in normal/high-speed mode by hardware — hard-wired to GND or via an external circuit. The firmware does not touch this pin.
 
 ### Wiring
 
@@ -72,7 +99,7 @@ Any external classical CAN transceiver is supported provided:
 | CANH | — | CAN bus high |
 | CANL | — | CAN bus low |
 
-> **Note:** If connecting to an existing CAN bus that already has termination resistors, do not add another 120 Ω terminator. Ensure common ground between the ESP32-S3 and the bus.
+> If connecting to a CAN bus that already has termination resistors, do not add another 120 Ω terminator. Ensure common ground between the ESP32-S3 and the bus.
 
 ---
 
@@ -96,30 +123,7 @@ Key parameters:
 | `SLCAN_BRIDGE_LAWICEL_FIRMWARE_VERSION` | `"0100"` | Returned by `V` command |
 | `SLCAN_BRIDGE_LAWICEL_SERIAL_NUMBER` | `"0001"` | Returned by `N` command |
 
-ESP-IDF system settings (errata fixes, flash size) remain in `sdkconfig.defaults`.
-
----
-
-## Build and flash
-
-Requires ESP-IDF installed and on PATH.
-
-```bash
-idf.py set-target esp32s3
-idf.py build
-idf.py flash
-```
-
----
-
-## Connecting to SavvyCAN
-
-1. Connect the ESP32-S3 board via USB
-2. Open SavvyCAN → **Connection** → **Add New Device Connection**
-3. Select **LAWICEL** type
-4. Select the correct serial port
-5. Set speed and enable the bus
-6. Click **Connect**
+ESP-IDF system settings (errata fixes, flash size) are in `sdkconfig.defaults`.
 
 ---
 
@@ -131,13 +135,13 @@ idf.py flash
 | `L` | Open channel, listen-only mode |
 | `C` | Close channel |
 | `Sx` | Set bitrate: S2=50k S3=100k S4=125k S5=250k S6=500k S7=800k S8=1M |
-| `F` | Read status flags (read-and-clear; returns BELL if channel closed) |
+| `F` | Read status flags (read-and-clear; returns error if channel closed) |
 | `V` | Firmware version |
 | `N` | Serial number |
 | `Z0` / `Z1` | Timestamps off / on |
 | `X0` / `X1` | Auto-poll off / on (compatibility stub) |
-| `tIIILDD...` | Transmit standard frame |
-| `TIIIIIIIILDD...` | Transmit extended frame |
+| `tIIILDD...` | Transmit standard data frame |
+| `TIIIIIIIILDD...` | Transmit extended data frame |
 | `rIIIL` | Transmit standard remote frame |
 | `RIIIIIIIIL` | Transmit extended remote frame |
 
@@ -147,5 +151,5 @@ idf.py flash
 
 - Classical CAN only — ESP32-S3 does not support CAN FD
 - ROM/bootloader output may appear on the serial port before the application starts
-- TWAI listen-only mode relies on the ESP32-S3 hardware controller, not transceiver mode control
-- Requires ESP-IDF toolchain; not compatible with Arduino core
+- Listen-only mode uses the TWAI hardware controller, not transceiver mode control
+- Requires ESP-IDF v5.x toolchain; not compatible with Arduino core
